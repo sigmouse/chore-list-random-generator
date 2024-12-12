@@ -30,49 +30,19 @@
 
     <h1>Random Number Generator</h1>
     <button onclick="generateRandomNumber()">Get Random Number</button>
-    <button id="resetButton" onclick="resetNumbers()">Reset Numbers</button>
+    <button id="takeButton" onclick="takeNumber()" style="display:none;">Take This Number</button>
+    <button id="regenerateButton" onclick="regenerateNumber()" style="display:none;">Regenerate Number</button>
+    <button id="resetButton" onclick="resetNumbers()" style="display:none;">Reset Numbers</button>
     <div id="result"></div>
 
     <script>
         // Load numbers from localStorage or create a new array if not present
         let numbers = JSON.parse(localStorage.getItem('numbers')) || Array.from({length: 40}, (_, i) => i + 1);
+        let lastGeneratedNumber = null;  // This will hold the most recently generated number
 
         // Save the updated numbers array to localStorage
         function saveNumbers() {
             localStorage.setItem('numbers', JSON.stringify(numbers));
         }
 
-        function generateRandomNumber() {
-            // If there are no numbers left, display a message and return
-            if (numbers.length === 0) {
-                document.getElementById('result').innerText = "No more numbers left!";
-                document.getElementById('resetButton').style.display = 'inline-block'; // Show reset button
-                return;
-            }
-
-            // Generate a random index from the remaining numbers
-            const randomIndex = Math.floor(Math.random() * numbers.length);
-            const randomNumber = numbers.splice(randomIndex, 1)[0]; // Remove the number from the list
-
-            // Save the updated array back to localStorage
-            saveNumbers();
-
-            // Display the random number
-            document.getElementById('result').innerText = `Random Number: ${randomNumber}`;
-        }
-
-        function resetNumbers() {
-            // Reset the numbers array to the full set of 1 to 40
-            numbers = Array.from({length: 40}, (_, i) => i + 1);
-
-            // Save the reset array to localStorage
-            saveNumbers();
-
-            // Hide the reset button and update the result message
-            document.getElementById('resetButton').style.display = 'none';
-            document.getElementById('result').innerText = "Numbers have been reset!";
-        }
-    </script>
-
-</body>
-</html>
+        function
