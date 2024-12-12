@@ -6,22 +6,51 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Random Chore Generator</title>
     <style>
+        /* General Styling */
         body {
-            font-family: Arial, sans-serif;
+            font-family: 'Arial', sans-serif;
             text-align: center;
-            margin: 20px;
+            margin: 0;
+            padding: 0;
+            background: #121212;
+            /* True dark mode background */
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 20px;
+            color: #e0e0e0;
+            text-shadow: 2px 2px 5px rgba(0, 0, 0, 0.5);
         }
 
         button {
-            padding: 10px 20px;
+            padding: 12px 24px;
             font-size: 16px;
             cursor: pointer;
+            border: none;
+            border-radius: 5px;
+            background-color: #1e88e5;
+            color: #fff;
+            transition: background-color 0.3s ease;
+            box-shadow: 2px 2px 10px rgba(0, 0, 0, 0.3);
+        }
+
+        button:hover {
+            background-color: #1565c0;
         }
 
         .chore {
             margin-top: 20px;
-            font-size: 20px;
+            font-size: 1.5rem;
             font-weight: bold;
+            color: #bdbdbd;
+            text-shadow: 1px 1px 5px rgba(0, 0, 0, 0.5);
         }
 
         .options {
@@ -29,19 +58,61 @@
         }
 
         .options button {
-            margin: 5px;
+            margin: 10px;
+            font-size: 14px;
+            padding: 10px 20px;
+        }
+
+        .options button:first-child {
+            background-color: #43a047;
+            /* Green color for Accept button */
+        }
+
+        .options button:first-child:hover {
+            background-color: #2e7d32;
+        }
+
+        .options button:nth-child(2) {
+            background-color: #e57373;
+            /* Light red color for Choose Another button */
+        }
+
+        .options button:nth-child(2):hover {
+            background-color: #d32f2f;
+        }
+
+        #resetButton {
+            display: none;
+            /* Hide the reset button */
+            margin-top: 20px;
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2rem;
+            }
+
+            button {
+                font-size: 14px;
+                padding: 10px 20px;
+            }
+
+            .chore {
+                font-size: 1.2rem;
+            }
         }
     </style>
 </head>
 
 <body>
-    <h1>Random Chore Generator</h1>
+    <h1 id="title">Random Chore Generator</h1>
     <button onclick="generateChore()">Get a Random Chore</button>
     <div class="chore" id="choreDisplay">Click the button to get a chore!</div>
     <div class="options" id="options" style="display: none;">
         <button onclick="acceptChore()">Accept Chore</button>
         <button onclick="rejectChore()">Choose Another</button>
     </div>
+    <button id="resetButton" onclick="resetChores()">Reset Chores</button>
 
     <script>
         let chores = [];
@@ -49,6 +120,7 @@
         let originalChores = [];
         let currentChore = null;
         let rejectAllowed = true;
+        let clickCount = 0;
 
         // Fetch the chores from the JSON file
         async function fetchChores() {
@@ -69,12 +141,12 @@
         function generateChore() {
             if (chores.length === 0) {
                 document.getElementById('choreDisplay').textContent = "All chores are done! Resetting chores.";
-                resetChores();
+                document.getElementById('resetButton').style.display = 'block'; // Show the reset button
                 return;
             }
             const randomIndex = Math.floor(Math.random() * chores.length);
             currentChore = chores[randomIndex]; // Select a random chore
-            document.getElementById('choreDisplay').textContent = `Your Chore Is: ${currentChore.task}`;
+            document.getElementById('choreDisplay').textContent = `Your first optional chore is: ${currentChore.task}`;
 
             // Show options to accept or reject the chore
             document.getElementById('options').style.display = 'block';
@@ -88,7 +160,7 @@
 
                 // Add the accepted chore to the selectedChores array
                 selectedChores.push(currentChore);
-                displayedChore = currentChore;
+                let displayedChore = currentChore;
                 currentChore = null;
                 rejectAllowed = true; // Reset reject allowance
 
@@ -114,13 +186,13 @@
             // Hide options and prompt for another chore
             document.getElementById('options').style.display = 'none';
             generateChore();
-            acceptChore();
+            acceptChore(); // Automatically accept the new chore
         }
 
-        // Function to save selected chores using a serverless function
+        // Function to save selected chores to a JSON file
         async function saveSelectedChores() {
             try {
-                const response = await fetch('/.netlify/functions/saveChores', {
+                const response = await fetch('save_chores.php', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -130,7 +202,7 @@
                 if (!response.ok) {
                     throw new Error('Failed to save selected chores');
                 }
-                console.log('Selected chores saved successfully via serverless function.');
+                console.log('Selected chores saved successfully');
             } catch (error) {
                 console.error('Error saving selected chores:', error);
             }
@@ -141,8 +213,22 @@
             chores = [...originalChores]; // Restore the chores from the original list
             selectedChores = []; // Clear the selected chores array
             rejectAllowed = true; // Reset reject allowance
+            document.getElementById('resetButton').style.display = 'none'; // Hide the reset button
+            document.getElementById('choreDisplay').textContent = "Click the button to get a chore!";
+            document.getElementById('options').style.display = 'none'; // Hide the options
             console.log('Chores have been reset.');
         }
+
+        // Detect clicks on the "R" in Random
+        document.getElementById('title').addEventListener('click', (event) => {
+            if (event.target.tagName === 'H1' && event.target.innerText.startsWith('R')) {
+                clickCount++;
+                if (clickCount === 7) {
+                    document.getElementById('resetButton').style.display = 'block';
+                    console.log('Reset button revealed!');
+                }
+            }
+        });
 
         // Fetch chores on page load
         fetchChores();
