@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,92 +11,138 @@
             text-align: center;
             padding: 20px;
         }
+
         button {
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
             margin: 10px;
         }
+
         #result {
             margin-top: 20px;
             font-size: 24px;
             font-weight: bold;
         }
+
         #rerollButton {
             display: none;
         }
     </style>
+    <script src="https://apis.google.com/js/api.js"></script>
 </head>
+
 <body>
     <h1>Random Chore Generator</h1>
-    <button id="generateButton" onclick="generateRandomChore()">Get Random Chore</button>
+    <button id="authorizeButton" onclick="handleAuthClick()">Authorize</button>
+    <button id="generateButton" onclick="generateRandomChore()" style="display:none;">Get Random Chore</button>
     <button id="rerollButton" onclick="rerollChore()" style="display:none;">Re-roll</button>
     <div id="result"></div>
 
     <script>
+        const CLIENT_ID = '384891216628-jd6l8f22mu1hccq630pa7p7nu6l0e4c9.apps.googleusercontent.com'; // Replace with your OAuth Client ID
+        const CLIENT_SECRET = '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'; // Replace with your OAuth Client Secret (not used in client-side apps)
+        const API_SCOPES = 'https://www.googleapis.com/auth/spreadsheets';
         const SHEET_ID = '1-T95_BJRz3Vm2ffio4-ib0F5JKjlMz-VsPRxau0nuo4'; // Replace with your actual Google Sheet ID
-        const API_KEY = 'AIzaSyDbuG7m8dq7FhHzMBG4M48Z6mC9TSE9wiI'; // Replace with your actual API key
-        const CHORE_RANGE = 'Chores!A:B'; // Chores data
-        const NUMBERS_RANGE = 'Numbers!A1:AN1'; // Array of available numbers
+        const CHORE_RANGE = 'Chores!A:B';
+        const NUMBERS_RANGE = 'Numbers!A1:AN1';
 
-        let availableNumbers = []; // To hold the fetched numbers
-        let lastRandomNumber = null; // To keep track of the last generated number
+        let availableNumbers = [];
+        let lastRandomNumber = null;
+        let tokenClient;
+        let gapiInited = false;
+        let gisInited = false;
 
-        // Fetch the available numbers from the Numbers sheet
+        // Load GAPI client library
+        function gapiLoaded() {
+            gapi.load('client', initializeGapiClient);
+        }
+
+        // Initialize GAPI client
+        async function initializeGapiClient() {
+            await gapi.client.init({
+                apiKey: '',
+                clientId: CLIENT_ID,
+                scope: API_SCOPES,
+            });
+            gapiInited = true;
+            maybeEnableButtons();
+        }
+
+        // Initialize GIS client
+        function gisLoaded() {
+            tokenClient = google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: API_SCOPES,
+                callback: '', // Defined later
+            });
+            gisInited = true;
+            maybeEnableButtons();
+        }
+
+        // Enable buttons if both libraries are loaded
+        function maybeEnableButtons() {
+            if (gapiInited && gisInited) {
+                document.getElementById('authorizeButton').style.display = 'inline-block';
+            }
+        }
+
+        // Handle authorization
+        function handleAuthClick() {
+            tokenClient.callback = async (response) => {
+                if (response.error) {
+                    throw response;
+                }
+                document.getElementById('authorizeButton').style.display = 'none';
+                document.getElementById('generateButton').style.display = 'inline-block';
+                await fetchAvailableNumbers();
+            };
+
+            tokenClient.requestAccessToken({ prompt: 'consent' });
+        }
+
+        // Fetch available numbers
         async function fetchAvailableNumbers() {
-            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${NUMBERS_RANGE}?key=${API_KEY}`;
             try {
-                const response = await fetch(url);
-                const data = await response.json();
-                availableNumbers = data.values[0].map(Number); // Convert to array of numbers
+                const response = await gapi.client.sheets.spreadsheets.values.get({
+                    spreadsheetId: SHEET_ID,
+                    range: NUMBERS_RANGE,
+                });
+                availableNumbers = response.result.values[0].map(Number);
             } catch (error) {
                 console.error('Error fetching available numbers:', error);
                 document.getElementById('result').innerText = 'Failed to load available numbers.';
             }
         }
 
-        // Update the Numbers sheet with the modified array
-       async function updateAvailableNumbers() {
-    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${NUMBERS_RANGE}?valueInputOption=RAW&key=${API_KEY}`;
-    const body = {
-        range: NUMBERS_RANGE,
-        majorDimension: 'ROWS',
-        values: [availableNumbers], // Ensure it's a 2D array as required by Sheets API
-    };
-
-    try {
-        const response = await fetch(url, {
-            method: 'PUT',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify(body),
-        });
-
-        if (!response.ok) {
-            throw new Error(`Failed to update numbers: ${response.statusText}`);
-        }
-    } catch (error) {
-        console.error('Error updating available numbers:', error);
-    }
-}
-
-
-        // Fetch a chore from the Google Sheet based on a random number
-        async function fetchChore(randomNumber) {
-            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${CHORE_RANGE}?key=${API_KEY}`;
+        // Update available numbers
+        async function updateAvailableNumbers() {
             try {
-                const response = await fetch(url);
-                const data = await response.json();
-                const rows = data.values;
+                await gapi.client.sheets.spreadsheets.values.update({
+                    spreadsheetId: SHEET_ID,
+                    range: NUMBERS_RANGE,
+                    valueInputOption: 'RAW',
+                    resource: { values: [availableNumbers] },
+                });
+            } catch (error) {
+                console.error('Error updating available numbers:', error);
+            }
+        }
 
-                // Find the chore with the matching ID
+        // Fetch a chore
+        async function fetchChore(randomNumber) {
+            try {
+                const response = await gapi.client.sheets.spreadsheets.values.get({
+                    spreadsheetId: SHEET_ID,
+                    range: CHORE_RANGE,
+                });
+                const rows = response.result.values;
                 const chore = rows.find(row => parseInt(row[0]) === randomNumber);
                 if (chore) {
                     document.getElementById('result').innerText = `Your chore is: ${chore[1]}`;
-                    document.getElementById('rerollButton').style.display = 'inline-block'; // Show the "Re-roll" button
-
-                    // Remove the selected number from the list
+                    document.getElementById('rerollButton').style.display = 'inline-block';
                     availableNumbers = availableNumbers.filter(num => num !== randomNumber);
-                    await updateAvailableNumbers(); // Update the sheet
+                    await updateAvailableNumbers();
                 } else {
                     document.getElementById('result').innerText = `No chore found for ID: ${randomNumber}`;
                 }
@@ -105,7 +152,7 @@
             }
         }
 
-        // Generate a random number and fetch the corresponding chore
+        // Generate a random chore
         async function generateRandomChore() {
             if (availableNumbers.length === 0) {
                 document.getElementById('result').innerText = 'No more chores available!';
@@ -118,7 +165,7 @@
             await fetchChore(lastRandomNumber);
         }
 
-        // Re-roll to fetch a new random chore
+        // Re-roll
         async function rerollChore() {
             if (availableNumbers.length <= 1) {
                 document.getElementById('result').innerText = 'No more chores available!';
@@ -130,16 +177,18 @@
             do {
                 const randomIndex = Math.floor(Math.random() * availableNumbers.length);
                 newRandomNumber = availableNumbers[randomIndex];
-            } while (newRandomNumber === lastRandomNumber); // Ensure the new number is different
+            } while (newRandomNumber === lastRandomNumber);
 
-            lastRandomNumber = newRandomNumber; // Update the last random number
+            lastRandomNumber = newRandomNumber;
             await fetchChore(lastRandomNumber);
         }
 
-        // Initialize by loading available numbers
-        (async () => {
-            await fetchAvailableNumbers();
-        })();
+        // Load libraries
+        window.onload = function () {
+            gapiLoaded();
+            gisLoaded();
+        };
     </script>
 </body>
+
 </html>
