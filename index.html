@@ -55,24 +55,29 @@
         }
 
         // Update the Numbers sheet with the modified array
-        async function updateAvailableNumbers() {
-            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${NUMBERS_RANGE}?valueInputOption=RAW&key=${API_KEY}`;
-            const body = {
-                range: NUMBERS_RANGE,
-                majorDimension: 'ROWS',
-                values: [availableNumbers],
-            };
+       async function updateAvailableNumbers() {
+    const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${NUMBERS_RANGE}?valueInputOption=RAW&key=${API_KEY}`;
+    const body = {
+        range: NUMBERS_RANGE,
+        majorDimension: 'ROWS',
+        values: [availableNumbers], // Ensure it's a 2D array as required by Sheets API
+    };
 
-            try {
-                await fetch(url, {
-                    method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify(body),
-                });
-            } catch (error) {
-                console.error('Error updating available numbers:', error);
-            }
+    try {
+        const response = await fetch(url, {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(body),
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to update numbers: ${response.statusText}`);
         }
+    } catch (error) {
+        console.error('Error updating available numbers:', error);
+    }
+}
+
 
         // Fetch a chore from the Google Sheet based on a random number
         async function fetchChore(randomNumber) {
