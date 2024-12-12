@@ -45,4 +45,63 @@
             localStorage.setItem('numbers', JSON.stringify(numbers));
         }
 
-        function
+        function generateRandomNumber() {
+            // If there are no numbers left, display a message and return
+            if (numbers.length === 0) {
+                document.getElementById('result').innerText = "No more numbers left!";
+                document.getElementById('resetButton').style.display = 'inline-block'; // Show reset button
+                document.getElementById('takeButton').style.display = 'none';  // Hide take button
+                document.getElementById('regenerateButton').style.display = 'none';  // Hide regenerate button
+                return;
+            }
+
+            // Generate a random index from the remaining numbers
+            const randomIndex = Math.floor(Math.random() * numbers.length);
+            lastGeneratedNumber = numbers.splice(randomIndex, 1)[0]; // Remove the number from the list
+
+            // Save the updated array back to localStorage
+            saveNumbers();
+
+            // Display the random number
+            document.getElementById('result').innerText = `Random Number: ${lastGeneratedNumber}`;
+            document.getElementById('takeButton').style.display = 'inline-block';  // Show the "Take This Number" button
+            document.getElementById('regenerateButton').style.display = 'inline-block';  // Show the "Regenerate" button
+        }
+
+        function takeNumber() {
+            // User takes the current number, so no changes to the array
+            document.getElementById('result').innerText = `You took the number: ${lastGeneratedNumber}`;
+            document.getElementById('takeButton').style.display = 'none';  // Hide the "Take This Number" button
+            document.getElementById('regenerateButton').style.display = 'none';  // Hide the "Regenerate" button
+        }
+
+        function regenerateNumber() {
+            // User regenerates the number, so put the previous one back in the array
+            numbers.push(lastGeneratedNumber);
+            numbers = numbers.sort((a, b) => a - b); // Optional: Sort the numbers back in order
+
+            // Save the updated array back to localStorage
+            saveNumbers();
+
+            // Generate a new number
+            generateRandomNumber();
+
+            // Update result message
+            document.getElementById('result').innerText = `You regenerated the number. New random number is: ${lastGeneratedNumber}`;
+        }
+
+        function resetNumbers() {
+            // Reset the numbers array to the full set of 1 to 40
+            numbers = Array.from({length: 40}, (_, i) => i + 1);
+
+            // Save the reset array to localStorage
+            saveNumbers();
+
+            // Hide the reset button and update the result message
+            document.getElementById('resetButton').style.display = 'none';
+            document.getElementById('result').innerText = "Numbers have been reset!";
+        }
+    </script>
+
+</body>
+</html>
