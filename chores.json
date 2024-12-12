@@ -1,0 +1,162 @@
+[
+    {
+        "Id": 1,
+        "Chore": "Master Bath - Sink 1"
+    },
+    {
+        "Id": 2,
+        "Chore": "Master Bath - Sink 2"
+    },
+    {
+        "Id": 3,
+        "Chore": "Master Bath - Countertop"
+    },
+    {
+        "Id": 4,
+        "Chore": "Master Bath - Mirror"
+    },
+    {
+        "Id": 5,
+        "Chore": "Master Bath - Shower Door 1"
+    },
+    {
+        "Id": 6,
+        "Chore": "Master Bath - Shower Door 2"
+    },
+    {
+        "Id": 7,
+        "Chore": "Master Bath - Floor"
+    },
+    {
+        "Id": 8,
+        "Chore": "Master Bath - Toilet"
+    },
+    {
+        "Id": 9,
+        "Chore": "Master Bed - Vacuum"
+    },
+    {
+        "Id": 10,
+        "Chore": "Master Bed - Sheets"
+    },
+    {
+        "Id": 11,
+        "Chore": "Master Bed - Dust Endtables"
+    },
+    {
+        "Id": 12,
+        "Chore": "Master Bed - Windows"
+    },
+    {
+        "Id": 13,
+        "Chore": "Dining Room - Clean Table"
+    },
+    {
+        "Id": 14,
+        "Chore": "Dining Room - Floor"
+    },
+    {
+        "Id": 15,
+        "Chore": "Dining Room - Organize Games"
+    },
+    {
+        "Id": 16,
+        "Chore": "Dining Room - Windows"
+    },
+    {
+        "Id": 17,
+        "Chore": "Living Room - Dust TV Stand"
+    },
+    {
+        "Id": 18,
+        "Chore": "Living Room - Clean Couch (Vacuum/Wipe Down)"
+    },
+    {
+        "Id": 19,
+        "Chore": "Living Room - Vacuum"
+    },
+    {
+        "Id": 20,
+        "Chore": "Living Room - Windows"
+    },
+    {
+        "Id": 21,
+        "Chore": "Hallway - Clear Junk"
+    },
+    {
+        "Id": 22,
+        "Chore": "Hallway - Floor"
+    },
+    {
+        "Id": 23,
+        "Chore": "Hallway - Window (Storm Door)"
+    },
+    {
+        "Id": 24,
+        "Chore": "Laundry Room - Vacuum Washer/Dryer"
+    },
+    {
+        "Id": 25,
+        "Chore": "Laundry Room - Floor"
+    },
+    {
+        "Id": 26,
+        "Chore": "Laundry Room - Wipe Down Machines"
+    },
+    {
+        "Id": 27,
+        "Chore": "Hall Bathroom - Sink"
+    },
+    {
+        "Id": 28,
+        "Chore": "Hall Bathroom - Mirror"
+    },
+    {
+        "Id": 29,
+        "Chore": "Hall Bathroom - Floor"
+    },
+    {
+        "Id": 30,
+        "Chore": "Hall Bathroom - Tub"
+    },
+    {
+        "Id": 31,
+        "Chore": "Hall Bathroom - Toilet"
+    },
+    {
+        "Id": 32,
+        "Chore": "Kitchen - Sink"
+    },
+    {
+        "Id": 33,
+        "Chore": "Kitchen - Microwave"
+    },
+    {
+        "Id": 34,
+        "Chore": "Kitchen - Stove"
+    },
+    {
+        "Id": 35,
+        "Chore": "Kitchen - Counters"
+    },
+    {
+        "Id": 36,
+        "Chore": "Kitchen - Island"
+    },
+    {
+        "Id": 37,
+        "Chore": "Kitchen - Clean Fridge (Inside/Outside)"
+    },
+    {
+        "Id": 38,
+        "Chore": "Kitchen - Floor"
+    },
+    {
+        "Id": 39,
+        "Chore": "Kitchen - Windows"
+    },
+    {
+        "Id": 40,
+        "Chore": "Kitchen - Clean Pantry"
+    }
+]
