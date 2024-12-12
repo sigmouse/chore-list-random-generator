@@ -9,108 +9,144 @@
         body {
             font-family: Arial, sans-serif;
             text-align: center;
-            padding: 20px;
-            background-color: rgb(49, 48, 48);
+            margin: 20px;
         }
 
         button {
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
-            margin: 10px;
         }
 
-        #result {
+        .chore {
             margin-top: 20px;
-            font-size: 24px;
+            font-size: 20px;
             font-weight: bold;
         }
 
-        #resetButton {
-            display: none;
+        .options {
+            margin-top: 20px;
+        }
+
+        .options button {
+            margin: 5px;
         }
     </style>
 </head>
 
 <body>
-
-    <h1 style="color: white;">Random Number Generator</h1>
-    <button onclick="generateRandomNumber()" style="background-color: lightblue">Get Random Number</button>
-    <button id="takeButton" onclick="takeNumber()" style="display:none; background-color: lightgreen;">Take This
-        Number</button>
-    <button id="regenerateButton" onclick="regenerateNumber()"
-        style="display:none; background-color: lightcoral">Re-roll Number</button>
-    <button id="resetButton" onclick="resetNumbers()" style="display:none;">Reset Numbers</button>
-    <div id="result" style="color: white;"></div>
+    <h1>Random Chore Generator</h1>
+    <button onclick="generateChore()">Get a Random Chore</button>
+    <div class="chore" id="choreDisplay">Click the button to get a chore!</div>
+    <div class="options" id="options" style="display: none;">
+        <button onclick="acceptChore()">Accept Chore</button>
+        <button onclick="rejectChore()">Choose Another</button>
+    </div>
 
     <script>
-        // Load numbers from localStorage or create a new array if not present
-        let numbers = JSON.parse(localStorage.getItem('numbers')) || Array.from({ length: 40 }, (_, i) => i + 1);
-        let lastGeneratedNumber = null;  // This will hold the most recently generated number
+        let chores = [];
+        let selectedChores = [];
+        let originalChores = [];
+        let currentChore = null;
+        let rejectAllowed = true;
 
-        // Save the updated numbers array to localStorage
-        function saveNumbers() {
-            localStorage.setItem('numbers', JSON.stringify(numbers));
+        // Fetch the chores from the JSON file
+        async function fetchChores() {
+            try {
+                const response = await fetch('chores.json'); // Replace with the path to your JSON file
+                if (!response.ok) {
+                    throw new Error('Failed to fetch chores');
+                }
+                chores = await response.json();
+                originalChores = [...chores]; // Make a copy of the original chores
+            } catch (error) {
+                console.error(error);
+                document.getElementById('choreDisplay').textContent = "Error loading chores.";
+            }
         }
 
-        function generateRandomNumber() {
-            // If there are no numbers left, display a message and return
-            if (numbers.length === 0) {
-                document.getElementById('result').innerText = "No more numbers left!";
-                document.getElementById('resetButton').style.display = 'inline-block'; // Show reset button
-                document.getElementById('takeButton').style.display = 'none';  // Hide take button
-                document.getElementById('regenerateButton').style.display = 'none';  // Hide regenerate button
+        // Function to generate a random chore
+        function generateChore() {
+            if (chores.length === 0) {
+                document.getElementById('choreDisplay').textContent = "All chores are done! Resetting chores.";
+                resetChores();
+                return;
+            }
+            const randomIndex = Math.floor(Math.random() * chores.length);
+            currentChore = chores[randomIndex]; // Select a random chore
+            document.getElementById('choreDisplay').textContent = `Your Chore Is: ${currentChore.task}`;
+
+            // Show options to accept or reject the chore
+            document.getElementById('options').style.display = 'block';
+        }
+
+        // Function to accept the current chore
+        function acceptChore() {
+            if (currentChore) {
+                // Remove the chore from the array
+                chores = chores.filter(chore => chore.id !== currentChore.id);
+
+                // Add the accepted chore to the selectedChores array
+                selectedChores.push(currentChore);
+                displayedChore = currentChore;
+                currentChore = null;
+                rejectAllowed = true; // Reset reject allowance
+
+                // Save selected chores to a new JSON file
+                saveSelectedChores();
+
+                // Hide options
+                document.getElementById('options').style.display = 'none';
+                document.getElementById('choreDisplay').textContent = `Your Chore, (${displayedChore.task}) was accepted!`;
+            }
+        }
+
+        // Function to reject the current chore
+        function rejectChore() {
+            if (!rejectAllowed) {
+                document.getElementById('choreDisplay').textContent = "You can only reject one chore!";
                 return;
             }
 
-            // Generate a random index from the remaining numbers
-            const randomIndex = Math.floor(Math.random() * numbers.length);
-            lastGeneratedNumber = numbers.splice(randomIndex, 1)[0]; // Remove the number from the list
+            currentChore = null; // Clear the current chore
+            rejectAllowed = false; // Disallow further rejections
 
-            // Save the updated array back to localStorage
-            saveNumbers();
-
-            // Display the random number
-            document.getElementById('result').innerText = `Random Number: ${lastGeneratedNumber}`;
-            document.getElementById('takeButton').style.display = 'inline-block';  // Show the "Take This Number" button
-            document.getElementById('regenerateButton').style.display = 'inline-block';  // Show the "Regenerate" button
+            // Hide options and prompt for another chore
+            document.getElementById('options').style.display = 'none';
+            generateChore();
+            acceptChore();
         }
 
-        function takeNumber() {
-            // User takes the current number, so no changes to the array
-            document.getElementById('result').innerText = `You took the number: ${lastGeneratedNumber}`;
-            document.getElementById('takeButton').style.display = 'none';  // Hide the "Take This Number" button
-            document.getElementById('regenerateButton').style.display = 'none';  // Hide the "Regenerate" button
+        // Function to save selected chores to a JSON file
+        async function saveSelectedChores() {
+            try {
+                const response = await fetch('save_chores.php', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(selectedChores),
+                });
+                if (!response.ok) {
+                    throw new Error('Failed to save selected chores');
+                }
+                console.log('Selected chores saved successfully');
+            } catch (error) {
+                console.error('Error saving selected chores:', error);
+            }
         }
 
-        function regenerateNumber() {
-            // User regenerates the number, so put the previous one back in the array
-            numbers.push(lastGeneratedNumber);
-            numbers = numbers.sort((a, b) => a - b); // Optional: Sort the numbers back in order
-
-            // Save the updated array back to localStorage
-            saveNumbers();
-
-            // Generate a new number
-            generateRandomNumber();
-
-            // Update result message
-            document.getElementById('result').innerText = `You regenerated the number. New random number is: ${lastGeneratedNumber}`;
+        // Function to reset chores when all are completed
+        function resetChores() {
+            chores = [...originalChores]; // Restore the chores from the original list
+            selectedChores = []; // Clear the selected chores array
+            rejectAllowed = true; // Reset reject allowance
+            console.log('Chores have been reset.');
         }
 
-        function resetNumbers() {
-            // Reset the numbers array to the full set of 1 to 40
-            numbers = Array.from({ length: 40 }, (_, i) => i + 1);
-
-            // Save the reset array to localStorage
-            saveNumbers();
-
-            // Hide the reset button and update the result message
-            document.getElementById('resetButton').style.display = 'none';
-            document.getElementById('result').innerText = "Numbers have been reset!";
-        }
+        // Fetch chores on page load
+        fetchChores();
     </script>
-
 </body>
 
 </html>
