@@ -14,6 +14,7 @@
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
+            margin: 10px;
         }
         #result {
             margin-top: 20px;
@@ -26,6 +27,7 @@
 
     <h1>Random Number Generator</h1>
     <button onclick="generateRandomNumber()">Get Random Number</button>
+    <button onclick="resetNumbers()">Reset Numbers</button>
     <div id="result"></div>
 
     <script>
@@ -53,6 +55,17 @@
 
             // Display the random number
             document.getElementById('result').innerText = `Random Number: ${randomNumber}`;
+        }
+
+        function resetNumbers() {
+            // Reset the numbers array to the full set of 1 to 40
+            numbers = Array.from({length: 40}, (_, i) => i + 1);
+
+            // Save the reset array to localStorage
+            saveNumbers();
+
+            // Display a message indicating the reset
+            document.getElementById('result').innerText = "Numbers have been reset!";
         }
     </script>
 
