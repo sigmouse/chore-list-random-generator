@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Random Number Generator</title>
+    <title>Random Chore Generator</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -21,87 +21,120 @@
             font-size: 24px;
             font-weight: bold;
         }
-        #resetButton {
+        #rerollButton {
             display: none;
         }
     </style>
 </head>
 <body>
-
-    <h1>Random Number Generator</h1>
-    <button onclick="generateRandomNumber()">Get Random Number</button>
-    <button id="takeButton" onclick="takeNumber()" style="display:none;">Take This Number</button>
-    <button id="regenerateButton" onclick="regenerateNumber()" style="display:none;">Regenerate Number</button>
-    <button id="resetButton" onclick="resetNumbers()" style="display:none;">Reset Numbers</button>
+    <h1>Random Chore Generator</h1>
+    <button id="generateButton" onclick="generateRandomChore()">Get Random Chore</button>
+    <button id="rerollButton" onclick="rerollChore()" style="display:none;">Re-roll</button>
     <div id="result"></div>
 
     <script>
-        // Load numbers from localStorage or create a new array if not present
-        let numbers = JSON.parse(localStorage.getItem('numbers')) || Array.from({length: 40}, (_, i) => i + 1);
-        let lastGeneratedNumber = null;  // This will hold the most recently generated number
+        const SHEET_ID = '1-T95_BJRz3Vm2ffio4-ib0F5JKjlMz-VsPRxau0nuo4'; // Replace with your actual Google Sheet ID
+        const API_KEY = 'AIzaSyDbuG7m8dq7FhHzMBG4M48Z6mC9TSE9wiI'; // Replace with your actual API key
+        const CHORE_RANGE = 'Chores!A:B'; // Chores data
+        const NUMBERS_RANGE = 'Numbers!A1:Z1'; // Array of available numbers
 
-        // Save the updated numbers array to localStorage
-        function saveNumbers() {
-            localStorage.setItem('numbers', JSON.stringify(numbers));
+        let availableNumbers = []; // To hold the fetched numbers
+        let lastRandomNumber = null; // To keep track of the last generated number
+
+        // Fetch the available numbers from the Numbers sheet
+        async function fetchAvailableNumbers() {
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${NUMBERS_RANGE}?key=${API_KEY}`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                availableNumbers = data.values[0].map(Number); // Convert to array of numbers
+            } catch (error) {
+                console.error('Error fetching available numbers:', error);
+                document.getElementById('result').innerText = 'Failed to load available numbers.';
+            }
         }
 
-        function generateRandomNumber() {
-            // If there are no numbers left, display a message and return
-            if (numbers.length === 0) {
-                document.getElementById('result').innerText = "No more numbers left!";
-                document.getElementById('resetButton').style.display = 'inline-block'; // Show reset button
-                document.getElementById('takeButton').style.display = 'none';  // Hide take button
-                document.getElementById('regenerateButton').style.display = 'none';  // Hide regenerate button
+        // Update the Numbers sheet with the modified array
+        async function updateAvailableNumbers() {
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${NUMBERS_RANGE}?valueInputOption=RAW&key=${API_KEY}`;
+            const body = {
+                range: NUMBERS_RANGE,
+                majorDimension: 'ROWS',
+                values: [availableNumbers],
+            };
+
+            try {
+                await fetch(url, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(body),
+                });
+            } catch (error) {
+                console.error('Error updating available numbers:', error);
+            }
+        }
+
+        // Fetch a chore from the Google Sheet based on a random number
+        async function fetchChore(randomNumber) {
+            const url = `https://sheets.googleapis.com/v4/spreadsheets/${SHEET_ID}/values/${CHORE_RANGE}?key=${API_KEY}`;
+            try {
+                const response = await fetch(url);
+                const data = await response.json();
+                const rows = data.values;
+
+                // Find the chore with the matching ID
+                const chore = rows.find(row => parseInt(row[0]) === randomNumber);
+                if (chore) {
+                    document.getElementById('result').innerText = `Your chore is: ${chore[1]}`;
+                    document.getElementById('rerollButton').style.display = 'inline-block'; // Show the "Re-roll" button
+
+                    // Remove the selected number from the list
+                    availableNumbers = availableNumbers.filter(num => num !== randomNumber);
+                    await updateAvailableNumbers(); // Update the sheet
+                } else {
+                    document.getElementById('result').innerText = `No chore found for ID: ${randomNumber}`;
+                }
+            } catch (error) {
+                console.error('Error fetching chore:', error);
+                document.getElementById('result').innerText = 'Failed to load chore.';
+            }
+        }
+
+        // Generate a random number and fetch the corresponding chore
+        async function generateRandomChore() {
+            if (availableNumbers.length === 0) {
+                document.getElementById('result').innerText = 'No more chores available!';
+                document.getElementById('rerollButton').style.display = 'none';
                 return;
             }
 
-            // Generate a random index from the remaining numbers
-            const randomIndex = Math.floor(Math.random() * numbers.length);
-            lastGeneratedNumber = numbers.splice(randomIndex, 1)[0]; // Remove the number from the list
-
-            // Save the updated array back to localStorage
-            saveNumbers();
-
-            // Display the random number
-            document.getElementById('result').innerText = `Random Number: ${lastGeneratedNumber}`;
-            document.getElementById('takeButton').style.display = 'inline-block';  // Show the "Take This Number" button
-            document.getElementById('regenerateButton').style.display = 'inline-block';  // Show the "Regenerate" button
+            const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+            lastRandomNumber = availableNumbers[randomIndex];
+            await fetchChore(lastRandomNumber);
         }
 
-        function takeNumber() {
-            // User takes the current number, so no changes to the array
-            document.getElementById('result').innerText = `You took the number: ${lastGeneratedNumber}`;
-            document.getElementById('takeButton').style.display = 'none';  // Hide the "Take This Number" button
-            document.getElementById('regenerateButton').style.display = 'none';  // Hide the "Regenerate" button
+        // Re-roll to fetch a new random chore
+        async function rerollChore() {
+            if (availableNumbers.length <= 1) {
+                document.getElementById('result').innerText = 'No more chores available!';
+                document.getElementById('rerollButton').style.display = 'none';
+                return;
+            }
+
+            let newRandomNumber;
+            do {
+                const randomIndex = Math.floor(Math.random() * availableNumbers.length);
+                newRandomNumber = availableNumbers[randomIndex];
+            } while (newRandomNumber === lastRandomNumber); // Ensure the new number is different
+
+            lastRandomNumber = newRandomNumber; // Update the last random number
+            await fetchChore(lastRandomNumber);
         }
 
-        function regenerateNumber() {
-            // User regenerates the number, so put the previous one back in the array
-            numbers.push(lastGeneratedNumber);
-            numbers = numbers.sort((a, b) => a - b); // Optional: Sort the numbers back in order
-
-            // Save the updated array back to localStorage
-            saveNumbers();
-
-            // Generate a new number
-            generateRandomNumber();
-
-            // Update result message
-            document.getElementById('result').innerText = `You regenerated the number. New random number is: ${lastGeneratedNumber}`;
-        }
-
-        function resetNumbers() {
-            // Reset the numbers array to the full set of 1 to 40
-            numbers = Array.from({length: 40}, (_, i) => i + 1);
-
-            // Save the reset array to localStorage
-            saveNumbers();
-
-            // Hide the reset button and update the result message
-            document.getElementById('resetButton').style.display = 'none';
-            document.getElementById('result').innerText = "Numbers have been reset!";
-        }
+        // Initialize by loading available numbers
+        (async () => {
+            await fetchAvailableNumbers();
+        })();
     </script>
-
 </body>
 </html>
