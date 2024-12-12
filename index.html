@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -9,35 +10,42 @@
             font-family: Arial, sans-serif;
             text-align: center;
             padding: 20px;
+            background-color: rgb(49, 48, 48);
         }
+
         button {
             padding: 10px 20px;
             font-size: 16px;
             cursor: pointer;
             margin: 10px;
         }
+
         #result {
             margin-top: 20px;
             font-size: 24px;
             font-weight: bold;
         }
+
         #resetButton {
             display: none;
         }
     </style>
 </head>
+
 <body>
 
-    <h1>Random Number Generator</h1>
-    <button onclick="generateRandomNumber()">Get Random Number</button>
-    <button id="takeButton" onclick="takeNumber()" style="display:none;">Take This Number</button>
-    <button id="regenerateButton" onclick="regenerateNumber()" style="display:none;">Re-roll Number</button>
+    <h1 style="color: white;">Random Number Generator</h1>
+    <button onclick="generateRandomNumber()" style="background-color: lightblue">Get Random Number</button>
+    <button id="takeButton" onclick="takeNumber()" style="display:none; background-color: lightgreen;">Take This
+        Number</button>
+    <button id="regenerateButton" onclick="regenerateNumber()"
+        style="display:none; background-color: lightcoral">Re-roll Number</button>
     <button id="resetButton" onclick="resetNumbers()" style="display:none;">Reset Numbers</button>
-    <div id="result"></div>
+    <div id="result" style="color: white;"></div>
 
     <script>
         // Load numbers from localStorage or create a new array if not present
-        let numbers = JSON.parse(localStorage.getItem('numbers')) || Array.from({length: 40}, (_, i) => i + 1);
+        let numbers = JSON.parse(localStorage.getItem('numbers')) || Array.from({ length: 40 }, (_, i) => i + 1);
         let lastGeneratedNumber = null;  // This will hold the most recently generated number
 
         // Save the updated numbers array to localStorage
@@ -92,7 +100,7 @@
 
         function resetNumbers() {
             // Reset the numbers array to the full set of 1 to 40
-            numbers = Array.from({length: 40}, (_, i) => i + 1);
+            numbers = Array.from({ length: 40 }, (_, i) => i + 1);
 
             // Save the reset array to localStorage
             saveNumbers();
@@ -104,4 +112,5 @@
     </script>
 
 </body>
+
 </html>
